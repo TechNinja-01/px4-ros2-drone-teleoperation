@@ -1,242 +1,220 @@
 # PX4 ROS 2 Drone Teleoperation
 
-A beginner-oriented guide to running keyboard or joystick teleoperation
-with **PX4 SITL**, **Gazebo**, **ROS 2 Jazzy**, and the **Micro XRCE-DDS
-Agent**.
+Beginner-friendly keyboard and joystick teleoperation for **PX4 SITL**,
+**Gazebo**, **ROS 2 Jazzy**, and the **Micro XRCE-DDS Agent** on Ubuntu
+24.04 LTS.
 
-This project contains two ROS 2 packages:
+## Demo video
 
--   `px4_bringup` --- starts PX4 SITL with Gazebo and starts the
-    XRCE-DDS Agent.
--   `px4_offboard` --- contains the velocity controller and
-    keyboard/joystick teleoperation nodes.
+Watch the project demonstration: **[PX4 ROS 2 Drone Teleoperation
+Demo](media/demo.mp4)**
 
-> **Important:** These instructions are for simulation on Ubuntu 24.04
-> LTS. Do not try them first on a real drone. The commands assume the
-> PX4 source folder is `~/PX4-Autopilot`, and the ROS 2 workspace is
-> `~/px4_ros2_ws`. If your folders are elsewhere, substitute your actual
-> paths.
+> The link works after `media/demo.mp4` is added to the repository. See
+> the **Add your recording to GitHub** instructions below. If the video
+> is large, upload it to YouTube or GitHub Releases and replace the link
+> above with the public video URL.
 
-## 1. Videos and visual learning
+## What this project contains
 
-Watch these to understand the overall workflow. They are useful learning
-resources, but their code or ROS distribution may differ from this
-repository.
+-   `px4_bringup/` --- launch file to start PX4 SITL + Gazebo and the
+    Micro XRCE-DDS Agent.
+-   `px4_offboard/` --- velocity controller, keyboard teleoperation,
+    joystick teleoperation, and launch files.
 
-1.  **PX4 + ROS 2 integration, joystick and keyboard teleoperation:**
-    [Watch the full integration masterclass on
-    YouTube](https://www.youtube.com/watch?v=cXdP29a-SEQ). The video
-    uses ROS 2 Humble; this project uses Jazzy.
-2.  **Keyboard teleoperation and PX4 control concepts:** [Watch PX4 +
-    ROS 2 Teleop on
-    YouTube](https://www.youtube.com/watch?v=skv9fBnTFDU). The
-    implementation differs, but the concepts are useful.
-3.  **Ubuntu 24.04 + ROS 2 Jazzy + PX4 SITL setup notes:** [Open the
-    Jazzy setup
-    guide](https://tianhuagao.github.io/documentation/px4-ros2-gazebo/).
-4.  **Official PX4 ROS 2 documentation:** [PX4 ROS 2 User
-    Guide](https://docs.px4.io/main/en/ros2/user_guide.html).
+## Contents
 
-## 2. What runs, and why?
+1.  [How the system works](#how-the-system-works)
+2.  [Requirements](#requirements)
+3.  [Install software](#install-software)
+4.  [Prepare the ROS 2 workspace](#prepare-the-ros-2-workspace)
+5.  [Build the packages](#build-the-packages)
+6.  [Start PX4 and the Agent](#start-px4-and-the-agent)
+7.  [Keyboard teleoperation](#keyboard-teleoperation)
+8.  [Joystick teleoperation](#joystick-teleoperation)
+9.  [Check topics](#check-topics)
+10. [Troubleshooting](#troubleshooting)
+11. [Add your recording to GitHub](#add-your-recording-to-github)
+12. [Safety](#safety)
 
-The system has four main parts:
+## How the system works
 
--   **PX4 SITL:** the simulated flight controller.
--   **Gazebo:** shows the simulated drone and world.
--   **Micro XRCE-DDS Agent:** connects PX4's uXRCE-DDS client to ROS 2.
--   **This ROS 2 project:** sends control requests and velocity
+The main components are:
+
+1.  **PX4 SITL** --- the simulated flight controller.
+2.  **Gazebo** --- renders the simulated drone and world.
+3.  **Micro XRCE-DDS Agent** --- connects PX4's uXRCE-DDS client to ROS
+    2.
+4.  **This ROS 2 project** --- publishes control requests and velocity
     setpoints.
 
-The usual startup order is:
+Start PX4/Gazebo and the Agent first. Then launch keyboard or joystick
+teleoperation.
 
-1.  Start PX4 SITL and Gazebo.
-2.  Start the Micro XRCE-DDS Agent.
-3.  Start this project's keyboard or joystick launch.
-4.  Check the topics and test movement in simulation.
+## Requirements
 
-The included `px4_bringup/minimal.launch.py` starts PX4 and the agent in
-separate GNOME Terminal windows. You can use that launch instead of
-starting them manually.
+-   Ubuntu 24.04 LTS
+-   ROS 2 Jazzy
+-   PX4 Autopilot with Gazebo simulation support
+-   Micro XRCE-DDS Agent
+-   A compatible `px4_msgs` package
+-   GNOME Terminal (the supplied launch files open new terminal windows)
+-   A joystick/game controller for joystick mode
 
-## 3. Before you begin
+The launch files expect PX4 at `~/PX4-Autopilot`. In the example
+commands below, the workspace is `~/Desktop/px4_ros2_ws`, matching the
+workspace used for this project demo. If you use another location,
+change the path consistently.
 
-You need:
+## Install software
 
--   Ubuntu 24.04 LTS.
--   ROS 2 Jazzy installed and working.
--   PX4 Autopilot installed with Gazebo simulation support.
--   Micro XRCE-DDS Agent installed.
--   A compatible `px4_msgs` package in your ROS 2 workspace.
--   GNOME Terminal, because the launch files open new terminal windows.
--   A joystick/game controller only if you want joystick mode.
+### 1. Install ROS 2 Jazzy
 
-Official installation instructions:
+Follow the official [ROS 2 Jazzy installation instructions for
+Ubuntu](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html).
 
--   [Install ROS 2
-    Jazzy](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)
--   [Install PX4's Ubuntu development
-    environment](https://docs.px4.io/main/en/dev_setup/dev_env_linux_ubuntu)
--   [Configure PX4 with ROS
-    2](https://docs.px4.io/main/en/ros2/user_guide.html)
-
-Open a terminal and check that ROS 2 is available:
+Open a terminal and source ROS 2:
 
 ``` bash
 source /opt/ros/jazzy/setup.bash
 echo $ROS_DISTRO
 ```
 
-Expected output:
+Expected output: `jazzy`.
 
-``` text
-jazzy
-```
-
-If you see `No such file or directory`, install ROS 2 Jazzy before
-continuing.
-
-Install common tools if needed:
+### 2. Install common tools
 
 ``` bash
 sudo apt update
 sudo apt install -y python3-rosdep python3-colcon-common-extensions gnome-terminal
 ```
 
-If `rosdep` has never been initialized on this computer, run:
+Initialize rosdep only if it has not been initialized before:
 
 ``` bash
 sudo rosdep init
 rosdep update
 ```
 
-If `sudo rosdep init` says it is already initialized, do not repeat it;
-just run `rosdep update`.
+If `sudo rosdep init` says it is already initialized, just run
+`rosdep update`.
 
-## 4. Check your PX4 and Agent installations
+### 3. Install PX4 and Gazebo
 
-### Check PX4
+Follow the official [PX4 Ubuntu development
+setup](https://docs.px4.io/main/en/dev_setup/dev_env_linux_ubuntu). Make
+sure PX4 is installed at:
 
-``` bash
-ls ~/PX4-Autopilot
+``` text
+~/PX4-Autopilot
 ```
 
-You should see folders and files from the PX4 source repository. The
-included bringup launch expects it at this exact path.
+The included bringup launch runs `make px4_sitl gz_x500`. If your PX4
+folder is elsewhere, update the path in
+`px4_bringup/launch/minimal.launch.py`.
 
-### Check the XRCE-DDS Agent
+### 4. Install the Micro XRCE-DDS Agent
+
+Follow the [official PX4 ROS 2
+guide](https://docs.px4.io/main/en/ros2/user_guide.html) for
+instructions compatible with your PX4 release.
+
+Check that the executable is available:
 
 ``` bash
 which MicroXRCEAgent
 ```
 
-If this prints a path, the command is available. If it prints nothing,
-follow the Agent setup instructions in the [official PX4 ROS 2
-guide](https://docs.px4.io/main/en/ros2/user_guide.html).
-
-The included launch uses this Agent command and port:
+The included launch uses:
 
 ``` bash
 MicroXRCEAgent udp4 -p 8888
 ```
 
-PX4's uXRCE-DDS client and the Agent must use compatible settings. Only
-one Agent should listen on the same port for this connection.
+PX4's uXRCE-DDS client must be configured to connect to the Agent using
+compatible settings.
 
-## 5. Put the project in a ROS 2 workspace
+## Prepare the ROS 2 workspace
 
-If you already have a working workspace with this project and compatible
-`px4_msgs`, skip to Section 6.
-
-Otherwise, create a workspace and clone this repository:
+If you already have this repository in `~/Desktop/px4_ros2_ws/src`, skip
+the clone command. Otherwise:
 
 ``` bash
-mkdir -p ~/px4_ros2_ws/src
-cd ~/px4_ros2_ws/src
+mkdir -p ~/Desktop/px4_ros2_ws/src
+cd ~/Desktop/px4_ros2_ws/src
 git clone https://github.com/TechNinja-01/px4-ros2-drone-teleoperation.git
 ```
 
-Make sure a **complete `px4_msgs` ROS 2 package** is also present under
-`~/px4_ros2_ws/src`. The `px4_msgs` directory in this repository is not
-a complete package. Use the official PX4 ROS 2 guide to select a version
-compatible with your PX4 firmware.
+A compatible, complete `px4_msgs` ROS 2 package must also be present
+under `src`. The `px4_msgs/` directory included in this repository is
+not a complete message package. Use the [PX4 ROS 2
+guide](https://docs.px4.io/main/en/ros2/user_guide.html) to choose a
+`px4_msgs` version compatible with your PX4 firmware.
 
-**Version warning:** Do not combine random branches of PX4, `px4_msgs`,
-and `px4_ros_com`. A mismatch can cause missing generated message-header
-errors during compilation.
+**Version compatibility matters:** do not mix arbitrary PX4, `px4_msgs`,
+and `px4_ros_com` branches. A mismatch can cause missing generated
+message-header errors.
 
-## 6. Install dependencies and build
+## Build the packages
 
-Run these commands from a terminal:
+Run in a terminal:
 
 ``` bash
 source /opt/ros/jazzy/setup.bash
-cd ~/px4_ros2_ws
+cd ~/Desktop/px4_ros2_ws
 rosdep install --from-paths src --ignore-src -r -y
+colcon build --packages-up-to px4_offboard px4_bringup
 ```
 
-Now build the project packages and the compatible `px4_msgs` package:
+If the build succeeds, source the workspace:
 
 ``` bash
-colcon build --symlink-install --packages-up-to px4_bringup px4_offboard
+source ~/Desktop/px4_ros2_ws/install/setup.bash
 ```
 
-This builds the selected packages and their declared dependencies. If
-your `px4_msgs` dependency is not declared by a package, make sure the
-compatible `px4_msgs` package is built too, for example:
+Check that both project packages are discoverable:
 
 ``` bash
-colcon build --symlink-install --packages-select px4_msgs
-colcon build --symlink-install --packages-up-to px4_bringup px4_offboard
+ros2 pkg list | grep -E '^(px4_offboard|px4_bringup)$'
 ```
 
-Then source the workspace overlay:
+Expected output includes:
 
-``` bash
-source ~/px4_ros2_ws/install/setup.bash
+``` text
+px4_bringup
+px4_offboard
 ```
 
-Check that ROS 2 can find both packages:
+If `colcon build` reports an error, do not continue as if the build
+succeeded. A warning about a missing `px4_ros_com/local_setup.bash` may
+indicate an incomplete or stale installation from another package. A
+missing header such as `px4_msgs/msg/sensor_gps.hpp` can indicate
+incompatible package versions. Resolve errors relevant to the packages
+you need before running the project.
 
-``` bash
-ros2 pkg list | grep -E '^(px4_bringup|px4_offboard)$'
-```
+## Start PX4 and the Agent
 
-Expected: both `px4_bringup` and `px4_offboard` appear.
+Choose **one** method below. Do not start duplicate PX4 instances or
+duplicate Agents on the same port.
 
-> **If the build fails:** do not continue as if it succeeded. For
-> example, a `px4_ros_com` error about `px4_msgs/msg/sensor_gps.hpp` may
-> indicate incompatible versions or an outdated example elsewhere in the
-> workspace. Align versions or build only the needed compatible
-> packages. The `colcon build` command must finish successfully for the
-> packages you plan to run.
+### Method A: use this project's bringup launch
 
-## 7. Start PX4 SITL, Gazebo and the Agent
-
-Choose **one** of the following methods. Do not start two PX4 instances
-or two Agents on the same port.
-
-### Method A --- easiest: use this project's bringup launch
-
-**Terminal 1:** run:
+In a terminal:
 
 ``` bash
 source /opt/ros/jazzy/setup.bash
-source ~/px4_ros2_ws/install/setup.bash
+source ~/Desktop/px4_ros2_ws/install/setup.bash
 ros2 launch px4_bringup minimal.launch.py
 ```
 
-The launch should open separate GNOME Terminal windows for:
+The launch should open GNOME Terminal windows for: - PX4 SITL and Gazebo
+(`make px4_sitl gz_x500`) - Micro XRCE-DDS Agent (`udp4 -p 8888`)
 
--   PX4 SITL + Gazebo, using `make px4_sitl gz_x500`.
--   Micro XRCE-DDS Agent, using UDP port `8888`.
+Keep those terminals open. This launch expects `~/PX4-Autopilot` and
+`MicroXRCEAgent` on your `PATH`.
 
-Leave these windows open. Gazebo may take a little time to start.
+### Method B: start them manually
 
-### Method B --- start components yourself
-
-Use this if you prefer to see each command separately.
-
-**Terminal 1 --- PX4 and Gazebo:**
+**Terminal 1 --- PX4 SITL + Gazebo**
 
 ``` bash
 cd ~/PX4-Autopilot
@@ -245,31 +223,27 @@ make px4_sitl gz_x500
 
 Wait for PX4 and Gazebo to start.
 
-**Terminal 2 --- Micro XRCE-DDS Agent:**
+**Terminal 2 --- Micro XRCE-DDS Agent**
 
 ``` bash
 MicroXRCEAgent udp4 -p 8888
 ```
 
-Leave both terminals running. Do not also run Method A.
+Leave both terminals running.
 
-## 8. Start keyboard teleoperation
+## Keyboard teleoperation
 
-Open a **new terminal** after PX4 and the Agent are running:
+With PX4/Gazebo and the Agent running, open another terminal:
 
 ``` bash
 source /opt/ros/jazzy/setup.bash
-source ~/px4_ros2_ws/install/setup.bash
+source ~/Desktop/px4_ros2_ws/install/setup.bash
 ros2 launch px4_offboard keyboard_teleop.launch.py
 ```
 
-This launch starts the velocity controller and opens another terminal
-window for keyboard input.
-
-**Important:** click inside the keyboard teleoperation terminal so it
-has keyboard focus before pressing keys.
-
-### Keyboard controls
+The launch starts the velocity controller and opens a separate GNOME
+Terminal for keyboard input. Click the keyboard terminal so it has focus
+before pressing keys.
 
   Key                   Action
   --------------------- ---------------------------
@@ -280,41 +254,40 @@ has keyboard focus before pressing keys.
   `A` / `D`             Yaw left / yaw right
   `X`                   Stop movement
 
-PX4 commonly uses the NED coordinate frame, where the Z axis points
-down. A negative Z velocity therefore corresponds to upward movement.
-Test and observe behavior in Gazebo before relying on any control.
+PX4 commonly uses NED coordinates, where the Z axis points down;
+negative Z velocity corresponds to upward movement. Test in Gazebo
+first. Do not attempt takeoff until you have confirmed the commands and
+Offboard behavior.
 
-## 9. Start joystick teleoperation
+## Joystick teleoperation
 
-Connect your joystick before launching. Then open a new terminal:
+Connect the joystick/game controller before launching. Then run:
 
 ``` bash
 source /opt/ros/jazzy/setup.bash
-source ~/px4_ros2_ws/install/setup.bash
+source ~/Desktop/px4_ros2_ws/install/setup.bash
 ros2 launch px4_offboard joystick_teleop.launch.py
 ```
 
-This starts the velocity controller, ROS 2 `joy_node`, and the project's
-joystick node. The launch reads settings from
+This launch starts the velocity controller, `joy_node`, and the
+project's joystick node. It reads settings from
 `px4_offboard/config/joy_config.yaml`.
 
-Button and axis mappings depend on your controller and configuration.
-Test them in simulation before flight.
-
-If joystick input does not appear, try:
+Mappings depend on the controller and configuration. Test in simulation
+first. To inspect joystick messages:
 
 ``` bash
 ros2 topic list | grep joy
 ros2 topic echo /joy
 ```
 
-## 10. Check whether ROS 2 is receiving data
+## Check topics
 
-Open another terminal and source both environments:
+In a new terminal, source ROS 2 and the workspace:
 
 ``` bash
 source /opt/ros/jazzy/setup.bash
-source ~/px4_ros2_ws/install/setup.bash
+source ~/Desktop/px4_ros2_ws/install/setup.bash
 ```
 
 List PX4 topics:
@@ -323,98 +296,128 @@ List PX4 topics:
 ros2 topic list | grep '/fmu/'
 ```
 
-Check the velocity command from the teleoperation node:
+Inspect the teleoperation velocity command:
 
 ``` bash
 ros2 topic echo /offboard_velocity_cmd
 ```
 
-Check trajectory setpoints sent toward PX4:
+Inspect trajectory setpoints sent toward PX4:
 
 ``` bash
 ros2 topic echo /fmu/in/trajectory_setpoint
 ```
 
-Topic names can differ by PX4 and `px4_msgs` version. To discover
-available status topics, run:
+Vehicle status topic names differ by PX4 and `px4_msgs` version.
+Discover the names available in your setup with:
 
 ``` bash
 ros2 topic list | grep vehicle_status
 ```
 
-If the topic list is empty, check that PX4 is running, the Agent is
-connected, and the `px4_msgs` version matches the firmware.
-
-## 11. Troubleshooting
+## Troubleshooting
 
 ### `ros2: command not found`
 
-Run:
-
 ``` bash
 source /opt/ros/jazzy/setup.bash
 ```
 
-If that file does not exist, ROS 2 Jazzy is not installed at the
-expected location.
+If the setup file does not exist, install ROS 2 Jazzy first.
 
 ### `Package 'px4_offboard' not found`
 
-Run:
-
 ``` bash
 source /opt/ros/jazzy/setup.bash
-source ~/px4_ros2_ws/install/setup.bash
+source ~/Desktop/px4_ros2_ws/install/setup.bash
 ```
 
-If the package is still missing, check the build output and confirm that
-this repository is under the workspace's `src` directory.
+If it is still missing, confirm the repository is under the workspace's
+`src` folder and that the build succeeded.
 
-### `gnome-terminal` not found
+### `gnome-terminal` is missing
 
 ``` bash
 sudo apt install -y gnome-terminal
 ```
 
-### `MicroXRCEAgent` not found
+### `MicroXRCEAgent` is missing
 
-Follow the Agent installation steps in the [PX4 ROS 2
+Install/build it following the [PX4 ROS 2
 guide](https://docs.px4.io/main/en/ros2/user_guide.html), then check:
 
 ``` bash
 which MicroXRCEAgent
 ```
 
-### Missing `sensor_gps.hpp` during build
+### No `/fmu/` topics appear
 
-This often points to incompatible `px4_ros_com` and `px4_msgs` versions
-or a stale example. Check the PX4 ROS 2 version guidance and align
-packages. Do not assume the workspace built if `colcon` reports an
-error.
+-   Confirm PX4 SITL is running.
+-   Confirm the Agent is running on UDP port `8888`.
+-   Check that PX4's uXRCE-DDS client connects to the Agent.
+-   Confirm that `px4_msgs` matches your PX4 firmware version.
 
-### Keyboard does nothing
+### `/offboard_velocity_cmd` is not published
 
--   Click the separate keyboard terminal to focus it.
--   Check that the keyboard node is still running.
--   Read any error messages in the terminal.
--   Confirm the PX4 and Agent terminals are still running.
+-   Confirm `keyboard_teleop.launch.py` is still running.
+-   Check for Python errors in the launch terminal and the separate
+    keyboard terminal.
+-   Focus the keyboard terminal and press a movement key briefly.
+-   Check nodes with `ros2 node list` and topics with `ros2 topic list`.
 
-### Gazebo or PX4 does not start
+### Build reports missing `sensor_gps.hpp`
 
-Run the PX4 command manually from `~/PX4-Autopilot` and read the error
-printed in that terminal. Resolve PX4/Gazebo setup issues before
-launching ROS 2 teleoperation.
+This may indicate a version mismatch between `px4_ros_com` and
+`px4_msgs` or an outdated example. Align versions using the PX4 ROS 2
+guide before rebuilding. Do not assume a failed build is successful.
 
-## 12. Safety
+## Add your recording to GitHub
 
--   Use this guide for simulation and development.
--   A successful simulation does **not** prove that the system is safe
-    for a real aircraft.
--   Before any hardware use, validate arming checks, Offboard
-    entry/exit, communications-loss behavior, failsafes, and emergency
-    procedures.
--   Follow applicable local laws and keep people clear of any real
-    aircraft.
+Your recording is currently on your computer at:
+
+``` text
+/home/harsh/Videos/Screencasts/Screencast from 2026-10-14 16-34-38.mp4
+```
+
+To link a local copy from this README, create a media folder and copy
+the file:
+
+``` bash
+cd ~/Desktop/px4-ros2-drone-teleoperation
+mkdir -p media
+cp "/home/harsh/Videos/Screencasts/Screencast from 2026-10-14 16-34-38.mp4" media/demo.mp4
+```
+
+Check the file size before committing:
+
+``` bash
+du -h media/demo.mp4
+```
+
+GitHub blocks ordinary Git files larger than 100 MB and recommends
+keeping repository files much smaller. If the video is large, upload it
+to YouTube (unlisted or public) or GitHub Releases, then replace the
+`media/demo.mp4` link near the top of this README with the resulting
+URL. Do not commit credentials or private recordings by accident.
+
+If the file is an appropriate size for your repository, commit the
+README and video:
+
+``` bash
+git add README.md media/demo.mp4
+git commit -m "Add demo video and beginner setup guide"
+git push
+```
+
+## Safety
+
+-   These instructions are for simulation and development.
+-   Successful simulation does not prove that the system is safe for a
+    real aircraft.
+-   Before hardware use, validate arming checks, Offboard entry/exit
+    behavior, communication-loss handling, failsafes, and emergency
+    procedures independently.
+-   Follow local regulations and keep people clear of any real aircraft.
 
 ## References
 
@@ -428,6 +431,3 @@ launching ROS 2 teleoperation.
 -   [Micro XRCE-DDS
     Agent](https://github.com/eProsima/Micro-XRCE-DDS-Agent)
 -   [QGroundControl documentation](https://docs.qgroundcontrol.com/)
-
-Please preserve applicable license and copyright notices for upstream
-code used or adapted in this repository.
