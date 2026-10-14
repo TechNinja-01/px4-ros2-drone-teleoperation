@@ -371,44 +371,6 @@ This may indicate a version mismatch between `px4_ros_com` and
 `px4_msgs` or an outdated example. Align versions using the PX4 ROS 2
 guide before rebuilding. Do not assume a failed build is successful.
 
-## Add your recording to GitHub
-
-Your recording is currently on your computer at:
-
-``` text
-/home/harsh/Videos/Screencasts/Screencast from 2026-10-14 16-34-38.mp4
-```
-
-To link a local copy from this README, create a media folder and copy
-the file:
-
-``` bash
-cd ~/Desktop/px4-ros2-drone-teleoperation
-mkdir -p media
-cp "/home/harsh/Videos/Screencasts/Screencast from 2026-10-14 16-34-38.mp4" media/demo.mp4
-```
-
-Check the file size before committing:
-
-``` bash
-du -h media/demo.mp4
-```
-
-GitHub blocks ordinary Git files larger than 100 MB and recommends
-keeping repository files much smaller. If the video is large, upload it
-to YouTube (unlisted or public) or GitHub Releases, then replace the
-`media/demo.mp4` link near the top of this README with the resulting
-URL. Do not commit credentials or private recordings by accident.
-
-If the file is an appropriate size for your repository, commit the
-README and video:
-
-``` bash
-git add README.md media/demo.mp4
-git commit -m "Add demo video and beginner setup guide"
-git push
-```
-
 ## Safety
 
 -   These instructions are for simulation and development.
